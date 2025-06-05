@@ -6,4 +6,4 @@ matplotlib==3.8.4
 requests==2.32.3
 python-binance==1.0.19
 plotly==5.22.0
-tensorflow==2.15.0
+tensorflow-cpu==2.11.0
