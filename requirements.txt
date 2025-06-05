@@ -1,9 +1,8 @@
-streamlit
-pandas
-numpy
-requests
-matplotlib
-plotly
-yfinance
-scikit-learn
-tensorflow
+streamlit==1.45.1
+pandas==2.3.0
+numpy==2.2.0
+yfinance==0.2.36
+matplotlib==3.8.4
+requests==2.32.3
+python-binance==1.0.19
+plotly==5.22.0
