@@ -1,60 +1,94 @@
 import streamlit as st
+import pandas as pd
 import numpy as np
-import requests
+import matplotlib.pyplot as plt
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
-from tensorflow.keras.losses import MeanSquaredError
+import datetime
+import requests
+from tensorflow.keras.models import load_model
+from sklearn.preprocessing import MinMaxScaler
 
-st.set_page_config(page_title="Crypto LSTM Dashboard", layout="wide")
-st.title("Crypto Price Prediction Dashboard")
+st.set_page_config(page_title="Crypto Price Prediction Dashboard", layout="wide")
 
-# Cache model loading so it doesn't reload on every rerun
-@st.cache_resource
+# Load pre-trained model if available
 def load_lstm_model():
-    # If you have a saved model file, load it here:
-    # return tf.keras.models.load_model("model_btc_lstm.h5")
+    try:
+        model = load_model("btc_model.h5")
+        return model
+    except Exception as e:
+        st.warning(f"Error loading model: {e}")
+        return None
 
-    # Otherwise, build a simple example LSTM model
-    model = Sequential([
-        tf.keras.layers.Input(shape=(60, 1)),  # 60 timesteps, 1 feature
-        LSTM(50, return_sequences=False),
-        Dense(1)
-    ])
-    model.compile(optimizer='adam', loss=MeanSquaredError())
-    return model
-
-model = load_lstm_model()
-
-# Fetch live BTC price from Binance API
-def get_btc_price():
-    url = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+# Fetch live price from Binance API
+def fetch_live_price(symbol="BTCUSDT"):
+    url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
     try:
         response = requests.get(url)
         data = response.json()
-        return float(data['price'])
+        return float(data["price"])
     except Exception as e:
-        st.error(f"Error fetching BTC price: {e}")
+        st.error(f"Error fetching {symbol} price: {e}")
         return None
 
-btc_price = get_btc_price()
-if btc_price is not None:
-    st.write(f"Current BTC Price (USDT): ${btc_price:,.2f}")
+# Generate dummy historical data
+def generate_dummy_data():
+    now = datetime.datetime.now()
+    dates = pd.date_range(end=now, periods=100)
+    prices = np.cumsum(np.random.randn(100)) + 27000
+    df = pd.DataFrame({"Date": dates, "Close": prices})
+    return df
 
-# Prepare dummy input data for prediction (replace with your real processed data)
-def prepare_dummy_input():
-    # 1 sample, 60 timesteps, 1 feature with random data
-    return np.random.rand(1, 60, 1).astype(np.float32)
+# Preprocess data for prediction
+def preprocess_data(df):
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    scaled_data = scaler.fit_transform(df["Close"].values.reshape(-1, 1))
+    X_test = [scaled_data[-60:]]
+    X_test = np.array(X_test)
+    X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+    return X_test, scaler
 
-input_data = prepare_dummy_input()
+# Predict next price
+def predict_price(model, df):
+    if model is None:
+        return -0.02
+    X_test, scaler = preprocess_data(df)
+    prediction = model.predict(X_test)
+    return scaler.inverse_transform(prediction)[0][0]
 
-# Predict price using the model (dummy prediction here)
-prediction = model.predict(input_data)
-predicted_price = prediction.flatten()[0]
+# Plot historical data
+def plot_chart(df, title):
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.plot(df["Date"], df["Close"], label="Historical Close Price")
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Price (USDT)")
+    ax.legend()
+    st.pyplot(fig)
 
-st.write(f"Predicted BTC Price (dummy): ${predicted_price:.2f}")
+# Sidebar
+st.sidebar.title("🧠 Crypto Predictor")
+selected_coin = st.sidebar.selectbox("Select Cryptocurrency", ["BTCUSDT", "ETHUSDT", "BNBUSDT", "PEPEUSDT", "SHIBUSDT"])
+st.sidebar.markdown("---")
 
-st.info("Replace dummy input and model with your actual data and trained model.")
+# Main
+st.title("📊 Crypto Price Prediction Dashboard")
+live_price = fetch_live_price(selected_coin)
+model = load_lstm_model()
+data = generate_dummy_data()
+predicted_price = predict_price(model, data)
+
+# Display metrics
+col1, col2 = st.columns(2)
+with col1:
+    if live_price:
+        st.metric(label=f"Live {selected_coin[:-4]} Price", value=f"${live_price:,.2f}")
+    else:
+        st.warning("Live price unavailable.")
+
+with col2:
+    st.metric(label=f"Predicted {selected_coin[:-4]} Price (Next Step)", value=f"${predicted_price:,.2f}")
+
+plot_chart(data, f"{selected_coin[:-4]} Historical Price")
 
 
 
