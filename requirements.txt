@@ -1,6 +1,6 @@
 streamlit==1.22.0
-tensorflow-cpu==2.10.1
-keras==2.10.0
+tensorflow==2.9.3
+keras==2.9.0
 pandas
 numpy
 yfinance
@@ -8,3 +8,4 @@ plotly
 scikit-learn
 requests
 textblob
+
