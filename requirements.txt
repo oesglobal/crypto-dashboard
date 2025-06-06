@@ -1,10 +1,10 @@
-streamlit
-yfinance
-numpy
-pandas
-plotly
-keras==2.11.0
+streamlit==1.33.0
 tensorflow==2.11.0
+keras==2.11.0
+pandas
+numpy
+yfinance
+plotly
 scikit-learn
 requests
 textblob
