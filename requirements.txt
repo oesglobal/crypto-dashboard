@@ -3,9 +3,8 @@ yfinance
 numpy
 pandas
 plotly
-keras
-tensorflow
+keras==2.11.0
+tensorflow==2.11.0
 scikit-learn
 requests
 textblob
-
