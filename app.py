@@ -56,8 +56,6 @@ st.write(f"Predicted BTC Price (dummy): ${predicted_price:.2f}")
 
 st.info("Replace dummy input and model with your actual data and trained model.")
 # Install dependencies (only once)
-!pip install yfinance
-!pip install tensorflow
 
 # Imports
 import yfinance as yf
